@@ -1,0 +1,23 @@
+# config/security.yaml
+
+security:
+  enable_authenticator_manager: true
+
+  providers:
+    in_memory:
+      memory:
+        users:
+          user:
+            password: 'password1'
+            roles: 'ROLE_USER'
+
+  firewalls:
+    dev:
+      pattern: ^/(_(profiler|wdt)|css|images|js)/
+      security: false
+
+    api:
+      pattern: ^/api
+      stateless: true
+      http_basic: ~
+      provider: in_memory
