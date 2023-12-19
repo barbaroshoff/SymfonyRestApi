@@ -1,41 +1,10 @@
 # config/routes.yaml
+app.swagger_ui:
+  path: /api/doc
+  methods: GET
+  defaults: { _controller: nelmio_api_doc.controller.swagger_ui }
 
-get_all_books:
-  path: /books
-  controller: App\Controller\BookController::getAllBooks
-  methods: ['GET']
-  requirements:
-    _format: 'json'
-
-get_book:
-  path: /books/{id}
-  controller: App\Controller\BookController::getBook
-  methods: ['GET']
-  requirements:
-    id: '\d+'
-    _format: 'json'
-
-create_book:
-  path: /books
-  controller: App\Controller\BookController::createBook
-  methods: ['POST']
-  defaults:
-    _format: 'json'
-  requirements:
-    _format: 'json'
-
-update_book:
-  path: /books/{id}
-  controller: App\Controller\BookController::updateBook
-  methods: ['PUT']
-  requirements:
-    id: '\d+'
-    _format: 'json'
-
-delete_book:
-  path: /books/{id}
-  controller: App\Controller\BookController::deleteBook
-  methods: ['DELETE']
-  requirements:
-    id: '\d+'
-    _format: 'json'
+app.swagger:
+  path: /api/doc.json
+  methods: GET
+  defaults: { _controller: nelmio_api_doc.controller.swagger }

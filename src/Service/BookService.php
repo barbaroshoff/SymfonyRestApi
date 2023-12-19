@@ -4,15 +4,22 @@ namespace App\Service;
 
 use App\Entity\Book;
 use App\Repository\BookRepository;
+use App\Validator\BookValidator;
+use App\Validator\Constraints\BookConstraint;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Validator\Constraint;
 
 class BookService
 {
     private $bookRepository;
 
-    public function __construct(BookRepository $bookRepository)
+    private $bookValidator;
+
+    public function __construct(BookRepository $bookRepository,
+                                BookValidator $bookValidator)
     {
         $this->bookRepository = $bookRepository;
+        $this->bookValidator = $bookValidator;
     }
     public function getBooks($requestData): array
     {
@@ -37,7 +44,7 @@ class BookService
         return $booksArray;
     }
 
-    public function getBooksById($id): array
+    public function getBookById($id): array
     {
         $book = $this->bookRepository->find($id);
 
@@ -54,15 +61,20 @@ class BookService
         ];
     }
 
-    public function createBook(array $data): Book
+    public function createBook($data): array
     {
+        $book = new Book();
+        $book->setTitle($data['title'] ?? null);
+        $book->setAuthor($data['author'] ?? null);
+        $book->setDescription($data['description'] ?? null);
+        $book->setPrice($data['price'] ?? null);
+
         try {
-            $book = $this->bookRepository->createBook($data);
+            $book = $this->bookRepository->createBook($book);
+
             if ($book instanceof Book) {
                 return [
-                    'success' => true,
-                    'message' => 'Книга успешно создана',
-                    'book' => $book,
+                    'message' => 'Book created successfully'
                 ];
             }
         } catch (\Exception $e) {
@@ -70,20 +82,63 @@ class BookService
         }
 
         return [
-            'success' => false,
-            'message' => 'Не удалось создать книгу',
-            'book' => null,
+            'message' => 'Book created unsuccessfully'
         ];
     }
 
-    public function updateBook($data)
+    public function updateBook(int $bookId, array $updatedData): array
     {
+        try {
+            $book = $this->bookRepository->find($bookId);
+            if (!$book) {
+                return [
+                    'message' => 'Book not found'
+                ];
+            }
 
+            if (isset($updatedData['title'])) {
+                $book->setTitle($updatedData['title']);
+            }
+
+            if (isset($updatedData['author'])) {
+                $book->setAuthor($updatedData['author']);
+            }
+
+            if (isset($updatedData['description'])) {
+                $book->setDescription($updatedData['description']);
+            }
+
+            if (isset($updatedData['price'])) {
+                $book->setPrice($updatedData['price']);
+            }
+
+            $updatedBook = $this->bookRepository->saveBook($book);
+            if ($updatedBook instanceof Book) {
+                return [
+                    'message' => 'Book updated successfully'
+                ];
+            }
+        } catch (\Exception $exception) {
+        }
+
+        return [
+            'message' => 'Book updated unsuccessfully'
+        ];
     }
 
-    public function deleteBook($data)
+    public function deleteBook($id)
     {
+        $isDeleted = $this->bookRepository->deleteBook($id);
 
+        if ($isDeleted) {
+            return [
+                "message" => "Book deleted successfully"
+            ];
+        } else {
+            return [
+                'message' => 'Book not found'
+            ];
+        }
     }
 
 }

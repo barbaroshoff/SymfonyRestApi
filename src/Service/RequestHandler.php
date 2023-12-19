@@ -13,7 +13,8 @@ class RequestHandler implements RequestHandlerInterface
     {
         $this->responseFormat = $request->headers->get('Accept') === 'application/xml' ? 'xml' : 'json';
 
-        return json_decode($request->getContent(), true);
+        $jsonData = $request->getContent();
+        return json_decode($jsonData, true);
     }
 
     public function createResponse(array $data): Response

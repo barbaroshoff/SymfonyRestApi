@@ -31,18 +31,36 @@ class BookRepository extends ServiceEntityRepository
             ->getResult();
     }
 
-    public function createBook(array $data): Book
+    public function createBook(Book $book): Book
     {
-        $book = new Book();
-        $book->setTitle($data['title'] ?? null);
-        $book->setAuthor($data['author'] ?? null);
-        $book->setDescription($data['description'] ?? null);
-        $book->setPrice($data['price'] ?? null);
-
         $entityManager = $this->getEntityManager();
         $entityManager->persist($book);
         $entityManager->flush();
 
         return $book;
+    }
+
+    public function saveBook(Book $book): Book
+    {
+        $entityManager = $this->getEntityManager();
+        $entityManager->persist($book);
+        $entityManager->flush();
+
+        return $book;
+    }
+
+    public function deleteBook(int $id): bool
+    {
+        $entityManager = $this->getEntityManager();
+        $book = $this->find($id);
+
+        if (!$book) {
+            return false;
+        }
+
+        $entityManager->remove($book);
+        $entityManager->flush();
+
+        return true;
     }
 }
