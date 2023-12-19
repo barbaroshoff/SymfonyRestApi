@@ -3,8 +3,11 @@
 namespace App\Controller;
 
 use App\Service\BookService;
+use App\Service\CatalogFileGenerator;
 use App\Service\RequestHandler;
+use App\Validator\BookValidator;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\Security\Core\Authorization\Voter\AuthenticatedVoter;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 use Symfony\Component\HttpFoundation\Request;
@@ -25,13 +28,20 @@ use Symfony\Component\Validator\Constraints as Assert;
 class BookController extends AbstractController
 {
     private BookService $bookService;
+    private BookValidator $bookValidator;
     private RequestHandler $requestHandler;
+    private CatalogFileGenerator $catalogFileGenerator;
+
 
     public function __construct(BookService $bookService,
-                                RequestHandler $requestHandler,)
+                                BookValidator $bookValidator,
+                                RequestHandler $requestHandler,
+                                CatalogFileGenerator $catalogFileGenerator)
     {
         $this->bookService = $bookService;
+        $this->bookValidator = $bookValidator;
         $this->requestHandler = $requestHandler;
+        $this->catalogFileGenerator = $catalogFileGenerator;
     }
 
     /**
@@ -63,6 +73,7 @@ class BookController extends AbstractController
     {
         try {
             $requestData = $this->requestHandler->handleRequest($request);
+
             $data = $this->bookService->getBooks($requestData);
             return $this->requestHandler->createResponse($data);
         } catch (\Exception $exception) {
@@ -161,7 +172,7 @@ class BookController extends AbstractController
         try {
             $requestData = $this->requestHandler->handleRequest($request);
 
-            $validationErrors = $this->validateBook($requestData);
+            $validationErrors = $this->bookValidator->validateBook($requestData);
 
             if (!empty($validationErrors)) {
                 return $this->requestHandler->createResponse(['errors' => $validationErrors]);
@@ -235,7 +246,7 @@ class BookController extends AbstractController
         try {
             $requestData = $this->requestHandler->handleRequest($request);
 
-            $validationErrors = $this->validateBook($requestData);
+            $validationErrors = $this->bookValidator->validateBook($requestData);
 
             if (!empty($validationErrors)) {
                 return $this->requestHandler->createResponse(['errors' => $validationErrors]);
@@ -294,35 +305,5 @@ class BookController extends AbstractController
     private function handleJsonError(\Exception $exception): Response
     {
         return $this->requestHandler->createResponse(['message' => $exception->getMessage()]);
-    }
-
-    function validateBook(array $data): array
-    {
-        $validator = Validation::createValidator();
-
-        $constraints = new Assert\Collection([
-            'title' => new Assert\NotBlank(['message' => 'Title cannot be blank']),
-            'author' => new Assert\NotBlank(['message' => 'Author cannot be blank']),
-            'description' => [
-                new Assert\NotBlank(['message' => 'Description cannot be blank']),
-                new Assert\Length([
-                    'min' => 10,
-                    'minMessage' => 'Description should be at least {{ limit }} characters long'
-                ]),
-            ],
-            'price' => [
-                new Assert\NotBlank(['message' => 'Price cannot be blank']),
-                new Assert\Type(['type' => 'float', 'message' => 'Price must be a valid number']),
-            ],
-        ]);
-
-        $violations = $validator->validate($data, $constraints);
-
-        $errors = [];
-        foreach ($violations as $violation) {
-            $errors[$violation->getPropertyPath()][] = $violation->getMessage();
-        }
-
-        return $errors;
     }
 }

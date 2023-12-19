@@ -13,21 +13,23 @@ class BookService
 {
     private $bookRepository;
 
-    private $bookValidator;
-
-    public function __construct(BookRepository $bookRepository,
-                                BookValidator $bookValidator)
+    public function __construct(BookRepository $bookRepository)
     {
         $this->bookRepository = $bookRepository;
-        $this->bookValidator = $bookValidator;
     }
     public function getBooks($requestData): array
     {
         $limit = $requestData['limit'] ?? 10;
         $offset = $requestData['offset'] ?? 0;
+        $author = $requestData['authorSearch'] ?? null;
 
-        $books = $this->bookRepository->getBooksByLimitOffset($limit, $offset);
-
+        if ($author !== null) {
+            // Получение книг по автору, если указан параметр author
+            $books = $this->bookRepository->getBooksByAuthor($author, $limit, $offset);
+        } else {
+            // Если параметр author не указан, получение книг с учетом limit и offset
+            $books = $this->bookRepository->getBooksByLimitOffset($limit, $offset);
+        }
         $booksArray = [];
         foreach ($books as $book) {
             $bookData = [
@@ -126,7 +128,7 @@ class BookService
         ];
     }
 
-    public function deleteBook($id)
+    public function deleteBook($id): array
     {
         $isDeleted = $this->bookRepository->deleteBook($id);
 
@@ -139,6 +141,32 @@ class BookService
                 'message' => 'Book not found'
             ];
         }
+    }
+
+    public function generateCatalog($cursor): array
+    {
+        $limit = 100;
+
+        $books = $this->bookRepository->getBooksByCursor($cursor, $limit);
+
+        $catalogData = [];
+        foreach ($books as $book) {
+            $catalogData[] = [
+                'title' => $book->getTitle(),
+                'price' => $book->getPrice()
+            ];
+        }
+
+        $lastBookId = null;
+        if (count($books) > 0) {
+            $lastBook = end($books);
+            $lastBookId = $lastBook->getId();
+        }
+
+        return [
+            'catalogData' => $catalogData,
+            'nextCursor' => $lastBookId
+        ];
     }
 
 }

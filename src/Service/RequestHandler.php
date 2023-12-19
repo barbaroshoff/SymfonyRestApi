@@ -14,7 +14,17 @@ class RequestHandler implements RequestHandlerInterface
         $this->responseFormat = $request->headers->get('Accept') === 'application/xml' ? 'xml' : 'json';
 
         $jsonData = $request->getContent();
-        return json_decode($jsonData, true);
+        $requestData = json_decode($jsonData, true);
+
+        $author = $request->query->get('authorSearch');
+        $limit = $request->query->get('limit');
+        $offset = $request->query->get('offset');
+
+        $requestData['authorSearch'] = $author;
+        $requestData['limit'] = $limit;
+        $requestData['offset'] = $offset;
+
+        return $requestData;
     }
 
     public function createResponse(array $data): Response

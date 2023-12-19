@@ -26,4 +26,7 @@
 
     http://127.0.0.1:8000/api/doc
 
+Доступ к методам Create Update Delete:
 
+    user: username
+    password: pass

@@ -31,6 +31,20 @@ class BookRepository extends ServiceEntityRepository
             ->getResult();
     }
 
+    public function getBooksByAuthor(string $author, int $limit = 10, int $offset = 0): array
+    {
+        $queryBuilder = $this->createQueryBuilder('b');
+        $queryBuilder->where('b.author = :author')
+            ->setParameter('author', $author)
+            ->setMaxResults($limit)
+            ->setFirstResult($offset);
+
+        $query = $queryBuilder->getQuery();
+        $books = $query->getResult();
+
+        return $books;
+    }
+
     public function createBook(Book $book): Book
     {
         $entityManager = $this->getEntityManager();
@@ -62,5 +76,24 @@ class BookRepository extends ServiceEntityRepository
         $entityManager->flush();
 
         return true;
+    }
+
+    public function getBooksByCursor($cursor, $limit): array
+    {
+        $queryBuilder = $this->createQueryBuilder('b');
+
+        if ($cursor !== null) {
+            // Логика для использования курсора для выборки данных
+            $queryBuilder->where('b.id > :cursor')
+                ->setParameter('cursor', $cursor);
+        }
+
+        $queryBuilder->orderBy('b.id')
+            ->setMaxResults($limit);
+
+        $query = $queryBuilder->getQuery();
+        $books = $query->getResult();
+
+        return $books;
     }
 }
